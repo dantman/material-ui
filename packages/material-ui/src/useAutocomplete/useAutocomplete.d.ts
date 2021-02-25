@@ -5,13 +5,13 @@ export interface CreateFilterOptionsConfig<T> {
   ignoreCase?: boolean;
   limit?: number;
   matchFrom?: 'any' | 'start';
-  stringify?: (option: T) => string;
+  stringify?: (option: O) => string;
   trim?: boolean;
 }
 
 export interface FilterOptionsState<T> {
   inputValue: string;
-  getOptionLabel: (option: T) => string;
+  getOptionLabel: (option: O) => string;
 }
 
 export interface AutocompleteGroupedOption<T = string> {
@@ -27,14 +27,15 @@ export function createFilterOptions<T>(
 
 export type AutocompleteFreeSoloValueMapping<FreeSolo> = FreeSolo extends true ? string : never;
 
-export type Value<T, Multiple, DisableClearable, FreeSolo> = Multiple extends undefined | false
+export type Value<V, Multiple, DisableClearable, FreeSolo> = Multiple extends undefined | false
   ? DisableClearable extends true
-    ? NonNullable<T | AutocompleteFreeSoloValueMapping<FreeSolo>>
-    : T | null | AutocompleteFreeSoloValueMapping<FreeSolo>
-  : Array<T | AutocompleteFreeSoloValueMapping<FreeSolo>>;
+    ? NonNullable<V | AutocompleteFreeSoloValueMapping<FreeSolo>>
+    : V | null | AutocompleteFreeSoloValueMapping<FreeSolo>
+  : Array<V | AutocompleteFreeSoloValueMapping<FreeSolo>>;
 
 export interface UseAutocompleteProps<
-  T,
+  O,
+  V,
   Multiple extends boolean | undefined,
   DisableClearable extends boolean | undefined,
   FreeSolo extends boolean | undefined
@@ -108,11 +109,11 @@ export interface UseAutocompleteProps<
   /**
    * A filter function that determines the options that are eligible.
    *
-   * @param {T[]} options The options to render.
+   * @param {O[]} options The options to render.
    * @param {object} state The state of the component.
-   * @returns {T[]}
+   * @returns {O[]}
    */
-  filterOptions?: (options: T[], state: FilterOptionsState<T>) => T[];
+  filterOptions?: (options: O[], state: FilterOptionsState<O>) => O[];
   /**
    * If `true`, hide the selected options from the list box.
    * @default false
@@ -126,37 +127,38 @@ export interface UseAutocompleteProps<
   /**
    * Used to determine the disabled state for a given option.
    *
-   * @param {T} option The option to test.
+   * @param {O} option The option to test.
    * @returns {boolean}
    */
-  getOptionDisabled?: (option: T) => boolean;
+  getOptionDisabled?: (option: O) => boolean;
   /**
    * Used to determine the string value for a given option.
    * It's used to fill the input (and the list box options if `renderOption` is not provided).
    *
-   * @param {T} option
+   * @param {O} option
    * @returns {string}
    * @default (option) => option.label ?? option
    */
-  getOptionLabel?: (option: T) => string;
+  getOptionLabel?: (option: O) => string;
   /**
    * Used to determine if an option is selected, considering the current value(s).
    * Uses strict equality by default.
    * ⚠️ Both arguments need to be handled, an option can only match with one value.
    *
-   * @param {T} option The option to test.
-   * @param {T} value The value to test against.
+   * @param {O} option The option to test.
+   * @param {V} value The value to test against.
    * @returns {boolean}
    */
-  getOptionSelected?: (option: T, value: T) => boolean;
+  getOptionSelected?: (option: O, value: V) => boolean;
+  getOptionValue?: (option: O) => V;
   /**
    * If provided, the options will be grouped under the returned string.
    * The groupBy value is also used as the text for group headings when `renderGroup` is not provided.
    *
-   * @param {T} options The options to group.
+   * @param {O} options The options to group.
    * @returns {string}
    */
-  groupBy?: (option: T) => string;
+  groupBy?: (option: O) => string;
   /**
    * If `true`, the component handles the "Home" and "End" keys when the popup is open.
    * It should move focus to the first option and last option, respectively.
@@ -208,12 +210,12 @@ export interface UseAutocompleteProps<
    * Callback fired when the highlight option changes.
    *
    * @param {object} event The event source of the callback.
-   * @param {T} option The highlighted option.
+   * @param {O} option The highlighted option.
    * @param {string} reason Can be: `"keyboard"`, `"auto"`, `"mouse"`.
    */
   onHighlightChange?: (
     event: React.SyntheticEvent,
-    option: T | null,
+    option: O | null,
     reason: AutocompleteHighlightChangeReason
   ) => void;
   /**
@@ -228,7 +230,7 @@ export interface UseAutocompleteProps<
   /**
    * Array of options.
    */
-  options: T[];
+  options: O[];
   /**
    * If `true`, the input's text is selected on focus.
    * It helps the user clear the selected value.
@@ -246,25 +248,25 @@ export interface UseAutocompleteProps<
    * The value must have reference equality with the option in order to be selected.
    * You can customize the equality behavior with the `getOptionSelected` prop.
    */
-  value?: Value<T, Multiple, DisableClearable, FreeSolo>;
+  value?: Value<V, Multiple, DisableClearable, FreeSolo>;
   /**
    * The default value. Use when the component is not controlled.
    * @default props.multiple ? [] : null
    */
-  defaultValue?: Value<T, Multiple, DisableClearable, FreeSolo>;
+  defaultValue?: Value<V, Multiple, DisableClearable, FreeSolo>;
   /**
    * Callback fired when the value changes.
    *
    * @param {object} event The event source of the callback.
-   * @param {T|T[]} value The new value of the component.
+   * @param {O|O[]} value The new value of the component.
    * @param {string} reason One of "create-option", "select-option", "remove-option", "blur" or "clear".
    * @param {string} [details]
    */
   onChange?: (
     event: React.SyntheticEvent,
-    value: Value<T, Multiple, DisableClearable, FreeSolo>,
+    value: Value<V, Multiple, DisableClearable, FreeSolo>,
     reason: AutocompleteChangeReason,
-    details?: AutocompleteChangeDetails<T>
+    details?: AutocompleteChangeDetails<O>
   ) => void;
 }
 
@@ -276,8 +278,8 @@ export type AutocompleteChangeReason =
   | 'remove-option'
   | 'clear'
   | 'blur';
-export interface AutocompleteChangeDetails<T = string> {
-  option: T;
+export interface AutocompleteChangeDetails<O = string> {
+  option: O;
 }
 export type AutocompleteCloseReason =
   | 'toggleInput'
@@ -318,7 +320,7 @@ export default function useAutocomplete<
     option,
     index,
   }: {
-    option: T;
+    option: O;
     index: number;
   }) => React.HTMLAttributes<HTMLLIElement>;
   id: string;

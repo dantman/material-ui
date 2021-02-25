@@ -80,7 +80,8 @@ export default function useAutocomplete(props) {
     freeSolo = false,
     getOptionDisabled,
     getOptionLabel: getOptionLabelProp = (option) => option.label ?? option,
-    getOptionSelected = (option, value) => option === value,
+    getOptionValue = (option) => option,
+    getOptionSelected = (option, value) => getOptionValue(option) === value,
     groupBy,
     handleHomeEndKeys = !props.freeSolo,
     id: idProp,
@@ -405,7 +406,7 @@ export default function useAutocomplete(props) {
           inputRef.current.value = inputValue;
         } else {
           const option = getOptionLabel(filteredOptions[nextIndex]);
-          inputRef.current.value = option;
+          inputRef.current.value = getOptionValue(option);
 
           // The portion of the selected suggestion that has not been typed by the user,
           // a completion string, appears inline after the input cursor in the textbox.
